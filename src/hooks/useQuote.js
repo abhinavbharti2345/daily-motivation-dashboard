@@ -1,4 +1,4 @@
-  import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { fetchRandomQuote } from "../services/quoteService";
 
 const useQuote = () => {
@@ -19,9 +19,7 @@ const useQuote = () => {
     }
   };
 
-  useEffect(() => {
-    getQuote();
-  }, []);
+  useEffect(() => { getQuote(); }, []);
 
   return { quote, author, loading, getQuote };
 };

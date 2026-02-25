@@ -1,4 +1,3 @@
-/* Liked quotes — read/write to localStorage */
 export const getLikedQuotes = () => {
   const stored = localStorage.getItem("likedQuotes");
   return stored ? JSON.parse(stored) : [];
@@ -8,7 +7,6 @@ export const saveLikedQuotes = (quotes) => {
   localStorage.setItem("likedQuotes", JSON.stringify(quotes));
 };
 
-/* Dark mode preference */
 export const getDarkMode = () => {
   const stored = localStorage.getItem("darkMode");
   return stored === null ? true : JSON.parse(stored);
@@ -18,7 +16,6 @@ export const saveDarkMode = (value) => {
   localStorage.setItem("darkMode", JSON.stringify(value));
 };
 
-/* Daily streak — increments on consecutive daily visits, resets if a day is missed */
 export const getStreak = () => {
   const stored = localStorage.getItem("streak");
   return stored ? JSON.parse(stored) : { count: 0, lastVisit: null };
@@ -38,7 +35,6 @@ export const updateStreak = () => {
   return newCount;
 };
 
-/* Weekly motivation tracker — stores per-day like counts */
 export const getWeeklyData = () => {
   const stored = localStorage.getItem("weeklyData");
   return stored ? JSON.parse(stored) : {};
@@ -63,7 +59,6 @@ export const getLast7DaysData = () => {
   });
 };
 
-/* Returns the most recently liked quote */
 export const getMostLikedQuote = () => {
   const quotes = getLikedQuotes();
   return quotes.length ? quotes[quotes.length - 1] : null;
