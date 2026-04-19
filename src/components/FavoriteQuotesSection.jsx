@@ -2,9 +2,18 @@ import { useState, useMemo } from "react";
 
 const CATEGORIES = ["All", "Motivation", "Success", "Wisdom", "Perseverance", "Date Added"];
 
-const FavoriteQuotesSection = ({ likedQuotes, onRemove, onQuoteOfDay }) => {
+const FavoriteQuotesSection = ({
+    likedQuotes,
+    onRemove,
+    onQuoteOfDay,
+    favoriteMeta,
+    onMetaChange,
+    collections,
+    onAddCollection,
+}) => {
     const [activeTag, setActiveTag] = useState("All");
     const [showQuotes, setShowQuotes] = useState(false);
+    const [newCollection, setNewCollection] = useState("");
 
     const filtered = useMemo(() => {
         if (activeTag === "Date Added") return [...likedQuotes].reverse();
@@ -12,20 +21,32 @@ const FavoriteQuotesSection = ({ likedQuotes, onRemove, onQuoteOfDay }) => {
         return likedQuotes;
     }, [likedQuotes, activeTag]);
 
+    const pinnedQuotes = filtered.filter((q) => favoriteMeta?.[q.quote]?.pinned);
+    const normalQuotes = filtered.filter((q) => !favoriteMeta?.[q.quote]?.pinned);
+    const revisitQuote = likedQuotes.length ? likedQuotes[Math.floor(Math.random() * likedQuotes.length)] : null;
+
     return (
         <div
             id="fav-bottom"
-            className="mt-8 mx-auto max-w-[1200px] w-[calc(100%-64px)] bg-[var(--bg-glass2)] backdrop-blur-[14px] border border-[var(--border)] rounded-[16px] px-6 pt-5 pb-4 shadow-[0_8px_36px_rgba(0,0,0,0.5)] transition-colors duration-300"
+            className="glass-card glass-card-hover w-full max-w-[780px] px-7 pt-6 pb-5 transition-colors duration-300"
         >
-            <div className="text-center mb-4">
+            <div className="text-center mb-5">
                 <h2 className="text-[1.3rem] font-extrabold text-[var(--accent-gold)] tracking-[1px]">
                     ✨ Your Favorite Quotes ✨
                 </h2>
             </div>
 
+            {revisitQuote && (
+                <div className="mb-4 px-4 py-3 rounded-[12px] bg-[var(--accent-dim)] border border-[var(--border)]">
+                    <p className="text-[0.72rem] uppercase tracking-[1px] text-[var(--accent)] font-bold mb-1">Revisit</p>
+                    <p className="text-[0.86rem] italic text-[var(--text)]">"{revisitQuote.quote}"</p>
+                    <p className="text-[0.75rem] text-[var(--text-muted)] mt-1">— {revisitQuote.author}</p>
+                </div>
+            )}
+
             {showQuotes && filtered.length > 0 && (
                 <div className="flex flex-col gap-2.5 max-h-[280px] overflow-y-auto mb-[18px] pr-1 fav-scroll">
-                    {filtered.map((q, i) => (
+                    {[...pinnedQuotes, ...normalQuotes].map((q, i) => (
                         <div
                             key={i}
                             className="group flex items-start gap-3 px-4 py-3.5 bg-[var(--accent-dim)] border border-[var(--border)] rounded-[10px] transition-all duration-300 animate-slide-up-fast hover:translate-x-1 hover:border-[var(--accent)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.25)]"
@@ -37,6 +58,35 @@ const FavoriteQuotesSection = ({ likedQuotes, onRemove, onQuoteOfDay }) => {
                             <div className="flex-1 text-left">
                                 <p className="text-[0.88rem] italic text-[var(--text)] leading-[1.55] mb-1">"{q.quote}"</p>
                                 <p className="text-[0.78rem] text-[var(--text-muted)] font-semibold mb-[5px]">— {q.author}</p>
+
+                                <div className="flex gap-2 mb-2 flex-wrap">
+                                    <button
+                                        onClick={() => onMetaChange(q.quote, { pinned: !favoriteMeta?.[q.quote]?.pinned })}
+                                        className={`smart-action-btn ${favoriteMeta?.[q.quote]?.pinned ? "is-active" : ""}`}
+                                    >
+                                        Pin
+                                    </button>
+                                    <select
+                                        className="collection-select"
+                                        value={favoriteMeta?.[q.quote]?.collection || ""}
+                                        onChange={(e) => onMetaChange(q.quote, { collection: e.target.value })}
+                                    >
+                                        <option value="">Collection</option>
+                                        {collections.map((item) => (
+                                            <option key={item} value={item}>{item}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <input
+                                    type="text"
+                                    maxLength={120}
+                                    className="note-input"
+                                    placeholder="Why did I save this?"
+                                    value={favoriteMeta?.[q.quote]?.note || ""}
+                                    onChange={(e) => onMetaChange(q.quote, { note: e.target.value })}
+                                />
+
                                 {q.category && (
                                     <span className="inline-block bg-[var(--accent-dim)] text-[var(--accent)] text-[0.68rem] font-bold px-2.5 py-0.5 rounded-full tracking-[0.5px]">
                                         {q.category}
@@ -56,13 +106,31 @@ const FavoriteQuotesSection = ({ likedQuotes, onRemove, onQuoteOfDay }) => {
                 </div>
             )}
 
-            <div className="flex items-center gap-2.5 flex-wrap">
-                <div className="flex gap-2 flex-wrap flex-1">
+            <div className="flex items-center gap-2 mb-4">
+                <input
+                    value={newCollection}
+                    onChange={(e) => setNewCollection(e.target.value)}
+                    className="note-input"
+                    placeholder="Create collection"
+                />
+                <button
+                    onClick={() => {
+                        onAddCollection(newCollection);
+                        setNewCollection("");
+                    }}
+                    className="smart-action-btn"
+                >
+                    Add
+                </button>
+            </div>
+
+            <div className="flex items-start gap-3 flex-wrap">
+                <div className="flex gap-2 flex-wrap flex-1 min-w-[320px]">
                     {CATEGORIES.map((tag) => (
                         <button
                             key={tag}
                             onClick={() => { setActiveTag(tag); setShowQuotes(true); }}
-                            className={`px-[18px] py-[7px] rounded-full border text-[0.8rem] font-semibold cursor-pointer tracking-[0.3px] transition-all duration-300
+                            className={`h-[34px] px-3.5 rounded-full border text-[0.74rem] font-semibold cursor-pointer tracking-[0.2px] transition-all duration-300
                 ${activeTag === tag
                                     ? "bg-[var(--accent)] text-white border-[var(--accent)] shadow-[0_3px_12px_var(--accent-glow)]"
                                     : "bg-transparent text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-dim)]"
@@ -75,13 +143,13 @@ const FavoriteQuotesSection = ({ likedQuotes, onRemove, onQuoteOfDay }) => {
 
                 <button
                     onClick={onQuoteOfDay}
-                    className="px-5 py-2 bg-[var(--accent)] text-white border-none rounded-full text-[0.82rem] font-bold cursor-pointer tracking-[0.3px] transition-all duration-300 shadow-[0_4px_14px_var(--accent-glow)] whitespace-nowrap hover:-translate-y-0.5 hover:shadow-[0_8px_24px_var(--accent-glow)]"
+                    className="h-[34px] px-4 bg-transparent text-[var(--text-muted)] border border-[var(--border)] rounded-full text-[0.74rem] font-bold cursor-pointer tracking-[0.25px] transition-all duration-300 whitespace-nowrap hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-dim)]"
                 >
-                    Quote of the Day! ➜
+                    Quote of the Day
                 </button>
             </div>
 
-            <p className="mt-3.5 text-center text-[0.92rem] font-bold text-[var(--text-muted)] tracking-[0.5px]">
+            <p className="mt-4 text-left text-[0.84rem] font-bold text-[var(--text-muted)] tracking-[0.35px]">
                 Total: {likedQuotes.length} quotes
             </p>
         </div>
