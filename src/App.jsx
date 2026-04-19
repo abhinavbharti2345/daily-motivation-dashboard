@@ -39,7 +39,7 @@ const getExplainText = (quote, author) => {
 };
 
 function App() {
-  const { quote, author, loading, getQuote } = useQuote();
+  const { quote, author, loading, getQuote, prefetchQuote } = useQuote();
   const { user, loading: authLoading, signOutUser } = useAuth();
   const [likedQuotes, setLikedQuotes] = useState([]);
   const [category, setCategory] = useState(randomCategory());
@@ -201,11 +201,18 @@ function App() {
   const isLiked = likedQuotes.some((q) => q.quote === quote);
 
   const getNextQuote = async () => {
-    await getQuote();
+    await getQuote(mood);
+    prefetchQuote(mood);
     if (mood === "Stressed") setCategory("Wisdom");
     else if (mood === "Tired") setCategory("Life");
     else if (mood === "Low") setCategory("Perseverance");
     else setCategory("Motivation");
+  };
+
+  const handleMoodSelect = async (nextMood) => {
+    setMood(nextMood);
+    prefetchQuote(nextMood);
+    await getQuote(nextMood);
   };
 
   const toggleLike = () => {
@@ -276,7 +283,7 @@ function App() {
 
       if (event.code === "Space") {
         event.preventDefault();
-        getQuote();
+        getQuote(mood);
       }
 
       if (event.key?.toLowerCase() === "l") {
@@ -297,7 +304,11 @@ function App() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [focusMode, getQuote, toggleLike]);
+  }, [focusMode, getQuote, mood, toggleLike]);
+
+  useEffect(() => {
+    prefetchQuote(mood);
+  }, [mood, prefetchQuote]);
 
   return (
     <div className={`relative min-h-screen ${focusMode ? "focus-mode" : ""}`}>
@@ -407,7 +418,7 @@ function App() {
                     {MOODS.map((m) => (
                       <button
                         key={m}
-                        onClick={() => setMood(m)}
+                        onClick={() => { void handleMoodSelect(m); }}
                         className={`mood-pill ${mood === m ? "is-active" : ""}`}
                       >
                         {m}

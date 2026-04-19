@@ -1,27 +1,35 @@
-import { useState, useEffect } from "react";
-import { fetchRandomQuote } from "../services/quoteService";
+import { useState, useCallback, useEffect } from "react";
+import { getQuote as requestQuote, prefetchQuote as warmQuote } from "../services/quoteService";
 
 const useQuote = () => {
   const [quote, setQuote] = useState("");
   const [author, setAuthor] = useState("");
+  const [apiCategory, setApiCategory] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const getQuote = async () => {
+  const getQuote = useCallback(async (mood = "random") => {
     try {
       setLoading(true);
-      const data = await fetchRandomQuote();
-      setQuote(data.content);
+      const data = await requestQuote(mood);
+      setQuote(data.text);
       setAuthor(data.author);
+      setApiCategory(data.category);
     } catch (error) {
       console.error("Error fetching quote:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { getQuote(); }, []);
+  const prefetchQuote = useCallback((mood = "random") => {
+    warmQuote(mood);
+  }, []);
 
-  return { quote, author, loading, getQuote };
+  useEffect(() => {
+    getQuote("Motivated"); // Initial load default mood
+  }, [getQuote]);
+
+  return { quote, author, apiCategory, loading, getQuote, prefetchQuote };
 };
 
 export default useQuote;
